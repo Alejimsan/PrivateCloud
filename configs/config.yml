@@ -1,0 +1,7 @@
+tunnel: 7ce989e3-d6a9-4571-bf98-29b3561186cc
+credentials-file: /home/alej/.cloudflared/7ce989e3-d6a9-4571-bf98-29b3561186cc.json
+
+ingress:
+  - hostname: aleserver.site
+    service: http://localhost:8080
+  - service: http_status:404

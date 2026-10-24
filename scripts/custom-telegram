@@ -1,0 +1,33 @@
+#!/var/ossec/framework/python/bin/python3
+import sys, json, urllib.request, ssl, os, time
+
+try:
+    with open(sys.argv[1], "r") as f: alert = json.loads(f.read())
+    rule_id = str(alert.get("rule", {}).get("id", ""))
+    if rule_id not in ["100001", "100003"]: sys.exit(0)
+    
+    lock = f"/tmp/wazuh_tg_{rule_id}.lock"
+    if os.path.exists(lock) and (time.time() - os.path.getmtime(lock)) < 10: sys.exit(0)
+    open(lock, "w").close()
+    
+    desc = alert.get("rule", {}).get("description", "Alerta")
+    lvl = str(alert.get("rule", {}).get("level", "10"))
+    agt = alert.get("agent", {}).get("name", "ale-server")
+    
+    # Diferenciacion de servicio
+    if rule_id == "100001":
+        header = "\U0001F6E1 *Wazuh TFG - Alerta SSH* \U0001F6E1"
+    else:
+        header = "\U0001F310 *Wazuh TFG - Alerta Nextcloud* \U0001F310"
+        
+    # Emojis en formato Unicode puro
+    msg = f"{header}\n\n\U0001F4CC *Detalle:* {desc}\n\U0001F538 *Severidad:* Nivel {lvl}\n\U0001F4BB *Host:* {agt}"
+    
+    data = json.dumps({"chat_id": "TU_CHAT_ID_AQUI", "text": msg, "parse_mode": "Markdown"}).encode("utf-8")
+    req = urllib.request.Request("https://api.telegram.org/botTU_TOKEN_AQUI/sendMessage", data=data, headers={"Content-Type": "application/json"})
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    urllib.request.urlopen(req, context=ctx)
+except Exception:
+    pass
